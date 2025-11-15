@@ -541,6 +541,7 @@
 
                 case 'LIVE':
                     elements.headerSubtitle.textContent = 'Join Now';
+                    // Show login form by default during live session
                     elements.loginForm.style.display = 'block';
                     elements.statusBox.style.display = 'block';
                     elements.statusBox.classList.add('live');
@@ -663,8 +664,19 @@
                 const data = await registerUser(name, phone);
 
                 if (data.success) {
-                    showMessage("✅ You're registered! We'll see you at the webinar.", 'success');
-                    elements.registrationForm.reset();
+                    const state = getWebinarState();
+                    
+                    if (state === 'LIVE') {
+                        // If webinar is live, show success and auto-redirect
+                        showMessage("✅ Registration successful! Redirecting to live webinar...", 'success');
+                        setTimeout(() => {
+                            window.location.href = CONFIG.PORTAL_URL;
+                        }, 1500);
+                    } else {
+                        // If before webinar, just show success message
+                        showMessage("✅ You're registered! We'll see you at the webinar.", 'success');
+                        elements.registrationForm.reset();
+                    }
                 } else {
                     showMessage(data.message || 'Registration failed. Please try again.', 'error');
                 }
@@ -716,7 +728,8 @@
         elements.showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
             const state = getWebinarState();
-            if (state === 'LIVE') {
+            // Allow registration switch during LIVE or BEFORE_START states
+            if (state === 'LIVE' || state === 'BEFORE_START') {
                 elements.loginForm.style.display = 'none';
                 elements.registrationForm.style.display = 'block';
                 elements.headerSubtitle.textContent = 'Register Now';
